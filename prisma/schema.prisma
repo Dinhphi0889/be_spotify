@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Discuss {
+  userId          Int?
+  discussId       Int       @id @default(autoincrement())
+  content         String?   @db.Text
+  songId          Int?
+  discussDate     DateTime? @db.DateTime(0)
+  replayDiscussId String?   @db.Text
+  User            User?     @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "Discuss_ibfk_1")
+  Song            Song?     @relation(fields: [songId], references: [songId], onDelete: NoAction, onUpdate: NoAction, map: "Discuss_ibfk_2")
+
+  @@index([songId], map: "songId")
+  @@index([userId], map: "userId")
+}
+
+model Following {
+  id                               Int   @id @default(autoincrement())
+  userId                           Int?
+  followingId                      Int?
+  User_Following_userIdToUser      User? @relation("Following_userIdToUser", fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "Following_ibfk_1")
+  User_Following_followingIdToUser User? @relation("Following_followingIdToUser", fields: [followingId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "Following_ibfk_2")
+
+  @@index([followingId], map: "followingUserId")
+  @@index([userId], map: "userId")
+}
+
+model Genre {
+  genreId    Int       @id @default(autoincrement())
+  nameGenre  String?   @db.VarChar(255)
+  createTime DateTime? @db.DateTime(0)
+  Song       Song[]
+}
+
+model LikedSong {
+  id          Int      @id @default(autoincrement())
+  idSongLiked Int?
+  userId      Int?
+  liked       Boolean?
+  User        User?    @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "LikedSong_ibfk_1")
+  Song        Song?    @relation(fields: [idSongLiked], references: [songId], onDelete: NoAction, onUpdate: NoAction, map: "LikedSong_ibfk_2")
+
+  @@index([userId], map: "idUser")
+  @@index([idSongLiked], map: "idSongLiked")
+}
+
+model ListFriends {
+  id                              Int     @id @default(autoincrement())
+  userId                          Int?
+  friendId                        Int?
+  roomChat                        String? @db.VarChar(50)
+  User                            User?   @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "ListFriends_ibfk_2")
+  User_ListFriends_friendIdToUser User?   @relation("ListFriends_friendIdToUser", fields: [friendId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "ListFriends_ibfk_3")
+
+  @@index([userId], map: "idUser")
+  @@index([friendId], map: "friendId")
+}
+
+model Message {
+  idMess      Int       @id @default(autoincrement())
+  idSender    Int?
+  contentMess String?   @db.Text
+  timeSend    DateTime? @db.DateTime(0)
+  roomChat    String?   @db.VarChar(100)
+  User        User?     @relation(fields: [idSender], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "Message_ibfk_2")
+
+  @@index([idSender], map: "idUser")
+}
+
+model RecentSong {
+  id     Int       @id @default(autoincrement())
+  userId Int?
+  songId Int?
+  time   DateTime? @db.DateTime(0)
+  User   User?     @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "RecentSong_ibfk_1")
+  Song   Song?     @relation(fields: [songId], references: [songId], onDelete: NoAction, onUpdate: NoAction, map: "RecentSong_ibfk_2")
+
+  @@index([userId], map: "userId")
+  @@index([songId], map: "songId")
+}
+
+model Song {
+  songId         Int             @id @default(autoincrement())
+  userId         Int?
+  genreId        Int?
+  songName       String          @db.VarChar(255)
+  viewer         Int?            @default(0)
+  duration       String?         @db.Text
+  popular        Boolean?
+  description    String?         @db.Text
+  songImage      String?         @db.VarChar(255)
+  publicDate     DateTime?       @db.Date
+  filePath       String?         @db.VarChar(255)
+  discussQuality Int?
+  Discuss        Discuss[]
+  LikedSong      LikedSong[]
+  PlaylistSongs  PlaylistSongs[]
+  RecentSong     RecentSong[]
+  User           User?           @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "Song_ibfk_1")
+  Genre          Genre?          @relation(fields: [genreId], references: [genreId], onDelete: NoAction, onUpdate: NoAction, map: "Song_ibfk_2")
+
+  @@index([genreId], map: "genreId")
+  @@index([userId], map: "userId")
+}
+
+model User {
+  userId                                 Int           @id @default(autoincrement())
+  account                                String        @db.VarChar(255)
+  name                                   String?       @db.VarChar(255)
+  nationality                            String?       @db.VarChar(255)
+  chanalName                             String?       @db.VarChar(255)
+  avatar                                 String?       @db.VarChar(255)
+  desciption                             String?       @db.Text
+  refreshToken                           String?       @db.VarChar(255)
+  password                               String        @db.VarChar(255)
+  banner                                 String?       @db.VarChar(255)
+  role                                   String?       @db.VarChar(50)
+  Discuss                                Discuss[]
+  Following_Following_userIdToUser       Following[]   @relation("Following_userIdToUser")
+  Following_Following_followingIdToUser  Following[]   @relation("Following_followingIdToUser")
+  LikedSong                              LikedSong[]
+  ListFriends                            ListFriends[]
+  ListFriends_ListFriends_friendIdToUser ListFriends[] @relation("ListFriends_friendIdToUser")
+  Message                                Message[]
+  Playlists                              Playlists[]
+  RecentSong                             RecentSong[]
+  Song                                   Song[]
+}
+
+model Playlists {
+  id            Int             @id @default(autoincrement())
+  userId        Int?
+  imagePath     String?         @db.VarChar(255)
+  playlistName  String?         @db.VarChar(255)
+  description   String?         @db.Text
+  createDate    DateTime?       @db.DateTime(0)
+  PlaylistSongs PlaylistSongs[]
+  User          User?           @relation(fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "Playlists_ibfk_1")
+
+  @@index([userId], map: "userId")
+}
+
+model PlaylistSongs {
+  id         Int        @id @default(autoincrement())
+  playlistId Int?
+  songId     Int?
+  Playlists  Playlists? @relation(fields: [playlistId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "PlaylistSongs_ibfk_1")
+  Song       Song?      @relation(fields: [songId], references: [songId], onDelete: NoAction, onUpdate: NoAction, map: "PlaylistSongs_ibfk_2")
+
+  @@index([playlistId], map: "playlistId")
+  @@index([songId], map: "songId")
+}
